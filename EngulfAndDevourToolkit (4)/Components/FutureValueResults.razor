@@ -1,0 +1,14 @@
+@if (Results.Any(r => r.FutureValue.HasValue))
+{
+    <h4>Latest Results</h4>
+    <ul>
+        @foreach (var r in Results.Where(r => r.FutureValue.HasValue))
+        {
+            <li>@r.Principal.ToString("C0") at @(r.AnnualRate*100)% over @r.Years years → @r.FutureValue?.ToString("C2")</li>
+        }
+    </ul>
+}
+
+@code {
+    [Parameter] public List<FutureValueModel> Results { get; set; } = new();
+}

@@ -1,0 +1,181 @@
+@page "/balance-sheet"
+@inject IBalanceSheetService BalanceService
+@inject IDataPersistenceService DataService
+@inject IJSRuntime JS
+
+<PageTitle>Balance Sheet Builder - Engulf & Devour</PageTitle>
+
+<h1>Balance Sheet Builder</h1>
+
+<div class="row">
+    <div class="col-md-6">
+        <h3>Assets</h3>
+        <button class="btn btn-sm btn-primary mb-3" @onclick="() => ShowDialog(null, isAsset: true)">
+            Add Asset
+        </button>
+
+        <BalanceSheetList 
+            Items="assets" 
+            IsAssets="true" 
+            OnEdit="item => ShowDialog(item, isAsset: true)" 
+            OnDelete="DeleteAsset" />
+        
+        <div class="mt-3 fw-bold fs-5">
+            Total Assets: @TotalAssets.ToString("C2")
+        </div>
+    </div>
+
+    <div class="col-md-6">
+        <h3>Liabilities</h3>
+        <button class="btn btn-sm btn-primary mb-3" @onclick="() => ShowDialog(null, isAsset: false)">
+            Add Liability
+        </button>
+
+        <BalanceSheetList 
+            Items="liabilities" 
+            IsAssets="false" 
+            OnEdit="item => ShowDialog(item, isAsset: false)" 
+            OnDelete="DeleteLiability" />
+        
+        <div class="mt-3 fw-bold fs-5">
+            Total Liabilities: @TotalLiabilities.ToString("C2")
+        </div>
+    </div>
+</div>
+
+<div class="mt-4 p-3 bg-light rounded border">
+    <h4 class="mb-0">
+        Equity: <span class="@(Equity >= 0 ? "text-success" : "text-danger")">
+            @Equity.ToString("C2")
+        </span>
+    </h4>
+</div>
+
+<div class="mt-4">
+    <button class="btn btn-success btn-lg me-3" @onclick="DownloadWord">
+        📄 Download Balance Sheet (.docx)
+    </button>
+
+    <InputFile OnChange="OnUpload" class="form-control d-inline-block w-auto align-middle" />
+    @if (!string.IsNullOrEmpty(uploadedFileName))
+    {
+        <div class="alert alert-success mt-3 mb-0">
+            Uploaded: <strong>@uploadedFileName</strong> at @uploadedTime
+        </div>
+    }
+</div>
+
+<!-- Dialog (shown conditionally via @ref and Show method) -->
+<BalanceSheetItemDialog @ref="itemDialog" OnSave="HandleSave" />
+
+@code {
+    private List<LineItem> assets = new();
+    private List<LineItem> liabilities = new();
+
+    private string? uploadedFileName;
+    private string? uploadedTime;
+
+    private BalanceSheetItemDialog? itemDialog;
+
+    private decimal TotalAssets => assets.Sum(x => x.Amount);
+    private decimal TotalLiabilities => liabilities.Sum(x => x.Amount);
+    private decimal Equity => TotalAssets - TotalLiabilities;
+
+    protected override async Task OnInitializedAsync()
+    {
+        // Load persisted data (separate files for assets and liabilities)
+        assets = (await DataService.LoadListAsync<LineItem>("balance-assets.json")).ToList();
+        liabilities = (await DataService.LoadListAsync<LineItem>("balance-liabilities.json")).ToList();
+
+        // Optional: seed if empty
+        if (!assets.Any())
+        {
+            assets.Add(new LineItem { Name = "Cash", Amount = 125000m });
+            assets.Add(new LineItem { Name = "Accounts Receivable", Amount = 35000m });
+            await SaveAssets();
+        }
+        if (!liabilities.Any())
+        {
+            liabilities.Add(new LineItem { Name = "Accounts Payable", Amount = 18000m });
+            await SaveLiabilities();
+        }
+    }
+
+    private async Task ShowDialog(LineItem? item, bool isAsset)
+    {
+        if (itemDialog is null) return;
+
+        var model = item is null 
+            ? new LineItem() 
+            : new LineItem { Name = item.Name, Amount = item.Amount }; // copy to avoid direct mutation
+
+        await itemDialog.Show(model, isAsset);
+    }
+
+    private async Task HandleSave(LineItem updatedItem, bool isAsset)
+    {
+        var list = isAsset ? assets : liabilities;
+
+        // If this is an edit (we assume the dialog passes back the same reference or we match by content)
+        // For simplicity here we use reference equality or replace by index if needed
+        // In production you might add an Id to LineItem
+        var existing = list.FirstOrDefault(x => x.Name == updatedItem.Name && x.Amount == updatedItem.Amount);
+        if (existing != null)
+        {
+            existing.Name = updatedItem.Name;
+            existing.Amount = updatedItem.Amount;
+        }
+        else
+        {
+            list.Add(updatedItem);
+        }
+
+        if (isAsset)
+            await SaveAssets();
+        else
+            await SaveLiabilities();
+
+        StateHasChanged();
+    }
+
+    private async Task DeleteAsset(LineItem item)
+    {
+        assets.Remove(item);
+        await SaveAssets();
+        StateHasChanged();
+    }
+
+    private async Task DeleteLiability(LineItem item)
+    {
+        liabilities.Remove(item);
+        await SaveLiabilities();
+        StateHasChanged();
+    }
+
+    private async Task SaveAssets() => 
+        await DataService.SaveListAsync("balance-assets.json", assets.ToArray());
+
+    private async Task SaveLiabilities() => 
+        await DataService.SaveListAsync("balance-liabilities.json", liabilities.ToArray());
+
+    private async Task DownloadWord()
+    {
+        var stream = await BalanceService.GenerateWordDocumentAsync(assets, liabilities);
+        var base64 = Convert.ToBase64String(stream.ToArray());
+
+        await JS.InvokeVoidAsync("downloadFile",
+            $"BalanceSheet_{DateTime.Now:yyyy-MM-dd}.docx",
+            base64,
+            "application/vnd.openxmlformats-officedocument.wordprocessingml.document");
+    }
+
+    private void OnUpload(InputFileChangeEventArgs e)
+    {
+        var file = e.File;
+        if (file is null) return;
+
+        uploadedFileName = file.Name;
+        uploadedTime = DateTime.Now.ToString("g");
+        StateHasChanged();
+    }
+}
