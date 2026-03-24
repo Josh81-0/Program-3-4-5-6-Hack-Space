@@ -1,0 +1,78 @@
+@page "/future-value"
+@inject IDataPersistenceService DataService
+@inject IJSRuntime JS
+
+<PageTitle>Future Value Calculator</PageTitle>
+
+<h1>Future Value Calculator</h1>
+
+<button class="btn btn-primary mb-3" @onclick="() => ShowDialog(null)">Add New Calculation</button>
+
+<FutureValueInputs @ref="inputsRef" OnCalculate="HandleCalculate" />
+
+@if (calculations.Any())
+{
+    <h3>Saved Calculations</h3>
+    <table class="table">
+        <thead>
+            <tr><th>Principal</th><th>Rate</th><th>Years</th><th>FV</th><th>Actions</th></tr>
+        </thead>
+        <tbody>
+            @foreach (var calc in calculations)
+            {
+                <tr>
+                    <td>@calc.Principal.ToString("C0")</td>
+                    <td>@(calc.AnnualRate * 100)%</td>
+                    <td>@calc.Years</td>
+                    <td>@calc.FutureValue?.ToString("C2")</td>
+                    <td>
+                        <button class="btn btn-sm btn-outline-primary" @onclick="() => ShowDialog(calc)">Edit</button>
+                        <button class="btn btn-sm btn-outline-danger" @onclick="() => Delete(calc)">Delete</button>
+                    </td>
+                </tr>
+            }
+        </tbody>
+    </table>
+}
+
+<FutureValueResults Results="calculations" />
+
+@code {
+    private List<FutureValueModel> calculations = new();
+    private FutureValueInputs? inputsRef;
+    private FutureValueModel? editingItem;
+
+    protected override async Task OnInitializedAsync()
+    {
+        calculations = (await DataService.LoadListAsync<FutureValueModel>("future-values.json")).ToList();
+    }
+
+    private async Task ShowDialog(FutureValueModel? item)
+    {
+        editingItem = item ?? new FutureValueModel();
+        // In real app use modal library or custom dialog; here we simulate with inputsRef
+        // For simplicity we reuse inputsRef and save on calculate
+        StateHasChanged();
+    }
+
+    private async Task HandleCalculate(FutureValueModel model)
+    {
+        model.FutureValue = model.Principal * (decimal)Math.Pow(1 + (double)model.AnnualRate, model.Years);
+
+        var existing = calculations.FirstOrDefault(x => x.Id == model.Id);
+        if (existing != null)
+            calculations[calculations.IndexOf(existing)] = model;
+        else
+            calculations.Add(model);
+
+        await DataService.SaveListAsync("future-values.json", calculations.ToArray());
+        StateHasChanged();
+    }
+
+    private async Task Delete(FutureValueModel item)
+    {
+        calculations.Remove(item);
+        await DataService.SaveListAsync("future-values.json", calculations.ToArray());
+        StateHasChanged();
+    }
+}
