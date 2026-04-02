@@ -1,0 +1,48 @@
+@page "/contact-submissions"
+@attribute [Authorize]
+@inject IDbContextFactory<AppDbContext> Factory
+
+<PageTitle>Contact Submissions</PageTitle>
+
+<h3>Contact Form Submissions</h3>
+
+@if (submissions == null)
+{
+    <p>Loading...</p>
+}
+else if (!submissions.Any())
+{
+    <p>No submissions yet.</p>
+}
+else
+{
+    <table class="table">
+        <thead>
+            <tr><th>Name</th><th>Email</th><th>Subject</th><th>Date</th><th>Message</th></tr>
+        </thead>
+        <tbody>
+            @foreach (var s in submissions)
+            {
+                <tr>
+                    <td>@s.Name</td>
+                    <td>@s.Email</td>
+                    <td>@s.Subject</td>
+                    <td>@s.SubmittedAt.ToLocalTime()</td>
+                    <td>@s.Message</td>
+                </tr>
+            }
+        </tbody>
+    </table>
+}
+
+@code {
+    private List<ContactSubmission>? submissions;
+
+    protected override async Task OnInitializedAsync()
+    {
+        await using var context = await Factory.CreateDbContextAsync();
+        submissions = await context.ContactSubmissions
+            .OrderByDescending(x => x.SubmittedAt)
+            .ToListAsync();
+    }
+}

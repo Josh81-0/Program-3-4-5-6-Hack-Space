@@ -1,0 +1,43 @@
+@page "/contact"
+@inject IDbContextFactory<AppDbContext> Factory
+
+<PageTitle>Contact Us</PageTitle>
+
+<h3>Contact Engulf & Devour</h3>
+
+<EditForm Model="submission" OnValidSubmit="SubmitForm">
+    <DataAnnotationsValidator />
+    <div class="mb-3">
+        <label>Name</label>
+        <InputText @bind-Value="submission.Name" class="form-control" />
+        <ValidationMessage For="() => submission.Name" />
+    </div>
+    <div class="mb-3">
+        <label>Email</label>
+        <InputText @bind-Value="submission.Email" class="form-control" />
+        <ValidationMessage For="() => submission.Email" />
+    </div>
+    <div class="mb-3">
+        <label>Subject</label>
+        <InputText @bind-Value="submission.Subject" class="form-control" />
+    </div>
+    <div class="mb-3">
+        <label>Message</label>
+        <InputTextArea @bind-Value="submission.Message" class="form-control" rows="5" />
+    </div>
+    <button type="submit" class="btn btn-primary">Send Message</button>
+</EditForm>
+
+@code {
+    private ContactSubmission submission = new();
+
+    private async Task SubmitForm()
+    {
+        await using var context = await Factory.CreateDbContextAsync();
+        context.ContactSubmissions.Add(submission);
+        await context.SaveChangesAsync();
+
+        submission = new(); // reset form
+        // show success message
+    }
+}

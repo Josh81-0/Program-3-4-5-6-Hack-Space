@@ -1,0 +1,86 @@
+@page "/blog"
+@using Microsoft.AspNetCore.Authorization
+@using Microsoft.AspNetCore.Components.Web
+@attribute [AllowAnonymous]
+
+<PageTitle>Blog - Engulf & Devour</PageTitle>
+
+<div class="container mt-4">
+    <h2 class="mb-4">Engulf & Devour Insights</h2>
+    <p class="lead text-muted mb-5">
+        Practical articles and guidance for HOA boards, property managers, and accounting professionals.
+    </p>
+
+    <div class="row">
+        <!-- Blog Post 1 -->
+        <div class="col-md-6 mb-4">
+            <div class="card h-100 shadow-sm">
+                <div class="card-body">
+                    <h5 class="card-title">Understanding Reserve Studies: Why Your HOA Needs One Every 3–5 Years</h5>
+                    <p class="text-muted small">March 15, 2026 • By Sarah Chen, Senior Accountant</p>
+                    <p class="card-text">
+                        A well-prepared reserve study helps HOAs avoid special assessments and plan for major repairs. 
+                        Learn what components should be included, how to interpret the 30-year funding plan, and common mistakes to avoid.
+                    </p>
+                    <a href="#" class="btn btn-outline-primary btn-sm">Read Full Article →</a>
+                </div>
+            </div>
+        </div>
+
+        <!-- Blog Post 2 -->
+        <div class="col-md-6 mb-4">
+            <div class="card h-100 shadow-sm">
+                <div class="card-body">
+                    <h5 class="card-title">Balance Sheet Best Practices for Small HOAs</h5>
+                    <p class="text-muted small">February 28, 2026 • By Michael Torres, CPA</p>
+                    <p class="card-text">
+                        Keeping a clean and accurate balance sheet is essential for transparency and board decision-making. 
+                        This guide covers proper classification of assets and liabilities, common pitfalls, and how our toolkit can help you stay compliant.
+                    </p>
+                    <a href="#" class="btn btn-outline-primary btn-sm">Read Full Article →</a>
+                </div>
+            </div>
+        </div>
+
+        <!-- Blog Post 3 -->
+        <div class="col-md-6 mb-4">
+            <div class="card h-100 shadow-sm">
+                <div class="card-body">
+                    <h5 class="card-title">How Rising Material Costs Are Affecting HOA Reserve Planning</h5>
+                    <p class="text-muted small">January 10, 2026 • By Elena Vargas, Reserve Specialist</p>
+                    <p class="card-text">
+                        Inflation and supply chain issues have significantly increased replacement costs for roofs, HVAC systems, and paving. 
+                        Discover strategies to adjust your reserve contributions and keep your community financially healthy.
+                    </p>
+                    <a href="#" class="btn btn-outline-primary btn-sm">Read Full Article →</a>
+                </div>
+            </div>
+        </div>
+
+        <!-- Blog Post 4 -->
+        <div class="col-md-6 mb-4">
+            <div class="card h-100 shadow-sm">
+                <div class="card-body">
+                    <h5 class="card-title">Why Every HOA Should Use a Digital Toolkit Like Ours</h5>
+                    <p class="text-muted small">December 5, 2025 • By The E&D Team</p>
+                    <p class="card-text">
+                        Manual spreadsheets and paper records are no longer enough. See how our secure, cloud-ready toolkit helps accountants and board members work faster, 
+                        reduce errors, and maintain better audit trails.
+                    </p>
+                    <a href="#" class="btn btn-outline-primary btn-sm">Read Full Article →</a>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="text-center mt-5">
+        <p class="text-muted">
+            More articles coming soon. Stay tuned for updates on accounting standards, reserve funding strategies, and industry best practices.
+        </p>
+    </div>
+</div>
+
+@code {
+    // No code needed – this is a static public blog landing page
+}
+

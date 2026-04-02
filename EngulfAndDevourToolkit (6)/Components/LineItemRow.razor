@@ -1,0 +1,10 @@
+<div class="input-group mb-2">
+    <input class="form-control" placeholder="Name" @bind="Item.Name" />
+    <input class="form-control" type="number" step="0.01" placeholder="Amount" @bind="Item.Amount" />
+    <button class="btn btn-outline-danger" @onclick="OnRemove">Remove</button>
+</div>
+
+@code {
+    [Parameter] public LineItem Item { get; set; } = default!;
+    [Parameter] public EventCallback OnRemove { get; set; }
+}

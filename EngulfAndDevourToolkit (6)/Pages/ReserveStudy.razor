@@ -1,0 +1,128 @@
+@page "/reserve-study"
+@inject IReserveStudyService ReserveService
+@inject IJSRuntime JS
+
+<PageTitle>Reserve Study Inventory</PageTitle>
+
+<h1>Reserve Study Inventory</h1>
+
+<div class="mb-3">
+    <label class="form-label">Number of Units / Residents</label>
+    <input type="number" class="form-control w-25" @bind="numberOfUnits" min="1" />
+</div>
+
+<h3>Components</h3>
+<button class="btn btn-primary mb-3" @onclick="AddComponent">Add Component</button>
+
+@foreach (var comp in components)
+{
+    <ReserveComponentRow Component="comp" OnRemove="() => RemoveComponent(comp)" />
+}
+
+@if (components.Any())
+{
+    <button class="btn btn-success me-2" @onclick="Calculate">Calculate & Show Chart</button>
+    <button class="btn btn-outline-primary" @onclick="ExportCsv">Export CSV</button>
+}
+
+<div class="mt-4">
+    <InputFile OnChange="ImportCsv" />
+    @if (!string.IsNullOrEmpty(importError))
+    {
+        <div class="alert alert-danger mt-2">@importError</div>
+    }
+</div>
+
+@if (annualExpenditures.Any())
+{
+    <div class="mt-5">
+        <h4>30-Year Expenditure Projection</h4>
+        <canvas id="expenditureChart" width="800" height="400"></canvas>
+    </div>
+
+    <div class="mt-4 alert alert-info">
+        <strong>Total Projected Expenditures:</strong> @totalExpenditures.ToString("C2")<br />
+        <strong>Recommended Monthly HOA Fee per Unit:</strong> @monthlyFee.ToString("C2")
+    </div>
+}
+
+@code {
+    private List<ReserveComponent> components = new();
+    private List<AnnualExpenditure> annualExpenditures = new();
+    private decimal totalExpenditures;
+    private decimal monthlyFee;
+    private int numberOfUnits = 100;
+    private string? importError;
+
+    protected override void OnInitialized()
+    {
+        // Demo data
+        components.Add(new ReserveComponent { Name = "Roof", UsefulLifeYears = 25, ReplacementCost = 45000 });
+        components.Add(new ReserveComponent { Name = "HVAC", UsefulLifeYears = 15, ReplacementCost = 12000 });
+    }
+
+    private void AddComponent() => components.Add(new ReserveComponent());
+    private void RemoveComponent(ReserveComponent c) => components.Remove(c);
+
+    private async Task Calculate()
+    {
+        try
+        {
+            annualExpenditures = ReserveService.CalculateAnnualExpenditures(components);
+            totalExpenditures = ReserveService.CalculateTotalExpenditures(annualExpenditures);
+            monthlyFee = ReserveService.CalculateMonthlyFeePerUnit(totalExpenditures, numberOfUnits);
+
+            var labels = annualExpenditures.Select(x => $"Year {x.Year}").ToList();
+            var data = annualExpenditures.Select(x => (double)x.Amount).ToList();
+
+            await JS.InvokeVoidAsync("renderExpenditureChart", "expenditureChart", labels, data);
+        }
+        catch (Exception ex)
+        {
+            importError = ex.Message;
+        }
+    }
+
+    private async Task ExportCsv()
+    {
+        var csv = "Name,UsefulLifeYears,ReplacementCost\n" +
+                  string.Join("\n", components.Select(c => $"{c.Name},{c.UsefulLifeYears},{c.ReplacementCost}"));
+
+        var bytes = System.Text.Encoding.UTF8.GetBytes(csv);
+        await JS.InvokeVoidAsync("downloadFile", "reserve-components.csv",
+            Convert.ToBase64String(bytes), "text/csv");
+    }
+
+    private async Task ImportCsv(InputFileChangeEventArgs e)
+    {
+        importError = null;
+        try
+        {
+            var file = e.File;
+            using var stream = file.OpenReadStream(10 * 1024 * 1024);
+            using var reader = new StreamReader(stream);
+            var lines = (await reader.ReadToEndAsync()).Split('\n');
+
+            var newList = new List<ReserveComponent>();
+            for (int i = 1; i < lines.Length; i++)
+            {
+                if (string.IsNullOrWhiteSpace(lines[i])) continue;
+                var parts = lines[i].Split(',');
+                if (parts.Length != 3) throw new Exception($"Invalid row: {lines[i]}");
+
+                newList.Add(new ReserveComponent
+                {
+                    Name = parts[0].Trim(),
+                    UsefulLifeYears = int.Parse(parts[1].Trim()),
+                    ReplacementCost = decimal.Parse(parts[2].Trim())
+                });
+            }
+            components = newList;
+            StateHasChanged();
+        }
+        catch (Exception ex)
+        {
+            importError = $"Import failed: {ex.Message}";
+        }
+    }
+}

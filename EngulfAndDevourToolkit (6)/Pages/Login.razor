@@ -1,0 +1,42 @@
+@page "/login"
+@inject SignInManager<IdentityUser> SignInManager
+@inject NavigationManager Navigation
+
+<PageTitle>Login - Engulf & Devour</PageTitle>
+
+<h3>Login</h3>
+
+<EditForm Model="model" OnValidSubmit="LoginUser">
+    <div class="mb-3">
+        <label>Email</label>
+        <InputText @bind-Value="model.Email" class="form-control" />
+    </div>
+    <div class="mb-3">
+        <label>Password</label>
+        <InputText type="password" @bind-Value="model.Password" class="form-control" />
+    </div>
+    <button type="submit" class="btn btn-primary">Login</button>
+</EditForm>
+
+@code {
+    private LoginModel model = new();
+
+    private async Task LoginUser()
+    {
+        var result = await SignInManager.PasswordSignInAsync(model.Email, model.Password, false, false);
+        if (result.Succeeded)
+        {
+            Navigation.NavigateTo(Navigation.Uri, forceLoad: true); // redirect back
+        }
+        else
+        {
+            // show error
+        }
+    }
+
+    private class LoginModel
+    {
+        public string Email { get; set; } = string.Empty;
+        public string Password { get; set; } = string.Empty;
+    }
+}

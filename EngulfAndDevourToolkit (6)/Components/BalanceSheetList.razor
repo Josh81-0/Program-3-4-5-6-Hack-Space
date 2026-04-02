@@ -1,0 +1,37 @@
+<table class="table table-sm table-hover">
+    <thead>
+        <tr>
+            <th>Name</th>
+            <th class="text-end">Amount</th>
+            <th style="width:120px"></th>
+        </tr>
+    </thead>
+    <tbody>
+        @foreach (var item in Items)
+        {
+            <tr>
+                <td>@item.Name</td>
+                <td class="text-end">@item.Amount.ToString("C2")</td>
+                <td>
+                    <button class="btn btn-sm btn-outline-secondary me-1" @onclick="() => OnEdit?.Invoke(item)">
+                        Edit
+                    </button>
+                    <button class="btn btn-sm btn-outline-danger" @onclick="() => OnDelete?.Invoke(item)">
+                        Delete
+                    </button>
+                </td>
+            </tr>
+        }
+        @if (!Items.Any())
+        {
+            <tr><td colspan="3" class="text-muted text-center py-3">No items yet</td></tr>
+        }
+    </tbody>
+</table>
+
+@code {
+    [Parameter] public List<LineItem> Items { get; set; } = default!;
+    [Parameter] public bool IsAssets { get; set; }
+    [Parameter] public EventCallback<LineItem> OnEdit { get; set; }
+    [Parameter] public EventCallback<LineItem> OnDelete { get; set; }
+}
