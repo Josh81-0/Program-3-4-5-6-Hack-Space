@@ -1,0 +1,53 @@
+@page "/blog"
+@rendermode InteractiveWebAssembly
+@inject HttpClient Http
+
+<PageTitle>Blog - Engulf & Devour</PageTitle>
+
+<div class="container mt-4">
+    <h2>Engulf & Devour Insights</h2>
+
+    @if (posts == null)
+    {
+        <p>Loading blog posts...</p>
+    }
+    else
+    {
+        <div class="row">
+            @foreach (var post in posts)
+            {
+                <div class="col-md-6 mb-4">
+                    <div class="card h-100">
+                        <div class="card-body">
+                            <h5>@post.Title</h5>
+                            <p class="text-muted small">@post.Date • By @post.Author</p>
+                            <p>@post.Summary</p>
+                            <a href="#" class="btn btn-outline-primary btn-sm">Read more →</a>
+                        </div>
+                    </div>
+                </div>
+            }
+        </div>
+    }
+</div>
+
+@code {
+    private List<BlogPost>? posts;
+
+    protected override async Task OnAfterRenderAsync(bool firstRender)
+    {
+        if (firstRender)
+        {
+            posts = await Http.GetFromJsonAsync<List<BlogPost>>("api/blog") ?? new();
+            StateHasChanged();
+        }
+    }
+
+    public class BlogPost
+    {
+        public string Title { get; set; } = string.Empty;
+        public string Date { get; set; } = string.Empty;
+        public string Author { get; set; } = string.Empty;
+        public string Summary { get; set; } = string.Empty;
+    }
+}

@@ -1,0 +1,12 @@
+<Pr<Project Sdk="Microsoft.NET.Sdk.Web">
+  <PropertyGroup>
+    <TargetFramework>net10.0</TargetFramework>
+    <Nullable>enable</Nullable>
+    <ImplicitUsings>enable</ImplicitUsings>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\Client\EngulfAndDevourToolkit.Client.csproj" />
+    <!-- All previous packages + Identity, EF Core, etc. -->
+  </ItemGroup>
+</Project>

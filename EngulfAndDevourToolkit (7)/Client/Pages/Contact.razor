@@ -1,0 +1,24 @@
+@page "/contact"
+@rendermode InteractiveWebAssembly
+@inject HttpClient Http
+
+<PageTitle>Contact Us - Engulf & Devour</PageTitle>
+
+<h3>Contact Engulf & Devour</h3>
+
+<EditForm Model="submission" OnValidSubmit="SubmitMessage">
+    <DataAnnotationsValidator />
+    <!-- Form fields: Name, Email, Subject, Message (same as before) -->
+    <button type="submit" class="btn btn-primary">Send Message</button>
+</EditForm>
+
+@code {
+    private ContactSubmission submission = new();
+
+    private async Task SubmitMessage()
+    {
+        await Http.PostAsJsonAsync("api/contact", submission);
+        submission = new(); // reset
+        // show success
+    }
+}
